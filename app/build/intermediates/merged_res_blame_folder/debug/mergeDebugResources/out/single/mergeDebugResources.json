@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.curso.android.module5.aichef.app-debug-76:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.curso.android.module5.aichef.app-main-78:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.curso.android.module5.aichef.app-debug-76:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.curso.android.module5.aichef.app-main-78:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.curso.android.module5.aichef.app-debug-76:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.curso.android.module5.aichef.app-main-78:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.curso.android.module5.aichef.app-debug-76:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.curso.android.module5.aichef.app-main-78:/mipmap-anydpi-v26/ic_launcher.xml"
+    }
+]

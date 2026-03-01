@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.curso.android.module5.aichef.app-mergeDebugResources-74:/values-v30/values-v30.xml",
+            "map": [
+                {
+                    "source": "/Users/rodrixgalvez/.gradle/caches/9.1.0/transforms/3b1b49fb32ff2c52bdb5ea8222495406/transformed/material3-release/res/values-v30/values-v30.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "72",
+                        "endOffsets": "123"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,1 @@
+-keep,allowobfuscation,allowshrinking class com.curso.android.module5.aichef.ui.viewmodel.ChefViewModel

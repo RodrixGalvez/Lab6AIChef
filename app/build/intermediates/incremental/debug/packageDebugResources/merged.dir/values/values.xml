@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AI Chef</string>
+    <string name="auth_subtitle">Tu asistente de cocina con IA</string>
+    <string name="auth_title">AI Chef</string>
+    <string name="cd_add_recipe">Agregar nueva receta</string>
+    <string name="cd_recipe_image">Imagen de la receta</string>
+    <string name="cd_selected_image">Imagen seleccionada para análisis</string>
+    <string name="email_label">Correo electrónico</string>
+    <string name="empty_recipes">No tienes recetas guardadas.\n¡Genera tu primera receta!</string>
+    <string name="error_email_empty">Ingresa tu correo electrónico</string>
+    <string name="error_email_in_use">Este correo ya está registrado</string>
+    <string name="error_generation_failed">Error al generar la receta</string>
+    <string name="error_generic">Ocurrió un error. Intenta de nuevo.</string>
+    <string name="error_invalid_email">Correo electrónico inválido</string>
+    <string name="error_no_image">Selecciona una imagen primero</string>
+    <string name="error_password_empty">Ingresa tu contraseña</string>
+    <string name="error_password_short">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="error_quota_exceeded">Cuota de API excedida. Intenta más tarde.</string>
+    <string name="error_user_not_found">Usuario no encontrado</string>
+    <string name="error_wrong_password">Contraseña incorrecta</string>
+    <string name="gcm_defaultSenderId" translatable="false">96879870198</string>
+    <string name="generate_recipe">Generar Receta</string>
+    <string name="generating">Analizando imagen con IA...</string>
+    <string name="generator_title">Generar Receta</string>
+    <string name="google_api_key" translatable="false">AIzaSyDB2K0zW4Pp9d4H-njI1WdKvx9f1adrJD4</string>
+    <string name="google_app_id" translatable="false">1:96879870198:android:786cd05384af98f7686cd7</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDB2K0zW4Pp9d4H-njI1WdKvx9f1adrJD4</string>
+    <string name="google_storage_bucket" translatable="false">ai-chef-6b60d.firebasestorage.app</string>
+    <string name="home_title">Mis Recetas</string>
+    <string name="image_selected">Imagen seleccionada</string>
+    <string name="login_button">Iniciar Sesión</string>
+    <string name="logout">Cerrar Sesión</string>
+    <string name="no_image">Selecciona una foto de ingredientes</string>
+    <string name="password_label">Contraseña</string>
+    <string name="project_id" translatable="false">ai-chef-6b60d</string>
+    <string name="register_button">Registrarse</string>
+    <string name="select_image">Seleccionar Imagen</string>
+    <string name="switch_to_login">¿Ya tienes cuenta? Inicia sesión</string>
+    <string name="switch_to_register">¿No tienes cuenta? Regístrate</string>
+    <style name="Theme.AIChef" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>
