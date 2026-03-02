@@ -46,6 +46,20 @@ import com.curso.android.module5.aichef.domain.model.UiState
 import com.curso.android.module5.aichef.ui.viewmodel.ChefViewModel
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.content.FileProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import androidx.compose.runtime.mutableStateOf
 
 /**
  * =============================================================================
@@ -132,7 +146,11 @@ fun RecipeDetailScreen(
 
     // Estado de la generación de imagen
     val imageState by viewModel.imageGenerationState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val view = LocalView.current
 
+    var isSharing by remember { mutableStateOf(false) }
+    var shareError by remember { mutableStateOf<String?>(null) }
     // =========================================================================
     // SIDE EFFECT: Verificar Cache o Generar Imagen
     // =========================================================================
@@ -157,99 +175,170 @@ fun RecipeDetailScreen(
             )
         }
     }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(recipe?.title ?: "Detalle de Receta") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        viewModel.clearImageState()
-                        onNavigateBack()
-                    }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                },
-                actions = {
-                    // Solo mostrar si la receta ya existe
-                    if (recipe != null) {
-                        IconButton(
-                            onClick = {
-                                viewModel.toggleFavorite(recipe.id, !recipe.isFavorite)
-                            }
-                        ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // TODO: aquí va el Scaffold (lo metes adentro)
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(recipe?.title ?: "Detalle de Receta") },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            viewModel.clearImageState()
+                            onNavigateBack()
+                        }) {
                             Icon(
-                                imageVector = if (recipe.isFavorite)
-                                    Icons.Filled.Favorite
-                                else
-                                    Icons.Outlined.FavoriteBorder,
-                                contentDescription = if (recipe.isFavorite)
-                                    "Quitar de favoritos"
-                                else
-                                    "Agregar a favoritos"
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver"
                             )
                         }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    },
+                    actions = {
+                        // Solo mostrar si la receta ya existe
+                        if (recipe != null) {
+                            IconButton(
+                                onClick = {
+                                    viewModel.toggleFavorite(recipe.id, !recipe.isFavorite)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (recipe.isFavorite)
+                                        Icons.Filled.Favorite
+                                    else
+                                        Icons.Outlined.FavoriteBorder,
+                                    contentDescription = if (recipe.isFavorite)
+                                        "Quitar de favoritos"
+                                    else
+                                        "Agregar a favoritos"
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = {
+                                // dispararemos share abajo
+                                isSharing = true
+                                shareError = null
+                            }
+                        ) {
+                            Icon(Icons.Filled.Share, contentDescription = "Compartir")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 )
-            )
-        }
-    ) { paddingValues ->
-        if (recipe == null) {
-            // Estado de error: receta no encontrada
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Receta no encontrada")
             }
-        } else {
-            // ================================================================
-            // CONTENIDO SCROLLEABLE
-            // ================================================================
-            // verticalScroll permite scroll cuando el contenido es largo
-            // rememberScrollState mantiene la posición durante recomposiciones
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
-            ) {
-                // Sección de imagen generada por IA con cache
-                RecipeImageSection(
-                    imageState = imageState,
-                    recipeTitle = recipe.title,
-                    onRetry = {
-                        viewModel.generateRecipeImage(
-                            recipeId = recipe.id,
-                            existingImageUrl = "", // Forzar regeneración
-                            recipeTitle = recipe.title,
-                            ingredients = recipe.ingredients
+        ) { paddingValues ->
+            if (recipe == null) {
+                // Estado de error: receta no encontrada
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Receta no encontrada")
+                }
+            } else {
+                // ================================================================
+                // CONTENIDO SCROLLEABLE
+                // ================================================================
+                // verticalScroll permite scroll cuando el contenido es largo
+                // rememberScrollState mantiene la posición durante recomposiciones
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp)
+                ) {
+                    // Sección de imagen generada por IA con cache
+                    RecipeImageSection(
+                        imageState = imageState,
+                        recipeTitle = recipe.title,
+                        onRetry = {
+
+                            viewModel.generateRecipeImage(
+                                recipeId = recipe.id,
+                                existingImageUrl = "", // Forzar regeneración
+                                recipeTitle = recipe.title,
+                                ingredients = recipe.ingredients
+                            )
+                        }
+                    )
+                    if (isSharing) {
+                        Text(
+                            text = "Preparando para compartir...",
+                            modifier = Modifier.padding(bottom = 8.dp),
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
-                )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    shareError?.let {
+                        Text(
+                            text = it,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
 
-                // Sección de ingredientes
-                IngredientsSection(ingredients = recipe.ingredients)
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    // Sección de ingredientes
+                    IngredientsSection(ingredients = recipe.ingredients)
 
-                // Sección de pasos de preparación
-                StepsSection(steps = recipe.steps)
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    // Sección de pasos de preparación
+                    StepsSection(steps = recipe.steps)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
+        }
+        if (isSharing) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Card {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        Text("Preparando para compartir...")
+                    }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(isSharing) {
+        if (!isSharing) return@LaunchedEffect
+
+        try {
+            // 1) Capturar bitmap del "root view" (lo visible en pantalla)
+            val bitmap = withContext(Dispatchers.Main) {
+                val b = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(b)
+                view.draw(canvas)
+                b
+            }
+
+            // 2) Guardar a archivo temporal + obtener URI con FileProvider
+            val uri = withContext(Dispatchers.IO) {
+                saveBitmapToCache(context, bitmap)
+            }
+
+            // 3) Abrir share sheet
+            shareImage(context, uri)
+
+        } catch (e: Exception) {
+            shareError = e.message ?: "Error al compartir"
+        } finally {
+            isSharing = false
         }
     }
 }
@@ -551,4 +640,30 @@ private fun StepsSection(steps: List<String>) {
             }
         }
     }
+}
+private fun saveBitmapToCache(context: Context, bitmap: Bitmap): android.net.Uri {
+    val cacheDir = File(context.cacheDir, "shares").apply { mkdirs() }
+    val file = File(cacheDir, "recipe_share_${System.currentTimeMillis()}.png")
+
+    FileOutputStream(file).use { out ->
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+    }
+
+    // OJO: necesitas FileProvider en manifest (abajo te digo)
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        file
+    )
+}
+
+private fun shareImage(context: Context, uri: android.net.Uri) {
+    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+        type = "image/png"
+        putExtra(android.content.Intent.EXTRA_STREAM, uri)
+        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    context.startActivity(
+        android.content.Intent.createChooser(intent, "Compartir receta")
+    )
 }
