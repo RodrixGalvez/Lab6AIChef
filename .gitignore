@@ -1,0 +1,40 @@
+# ==========================
+# Gradle
+# ==========================
+.gradle/
+build/
+**/build/
+
+# ==========================
+# Android Studio
+# ==========================
+.idea/
+*.iml
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# ==========================
+# Kotlin / JVM
+# ==========================
+*.class
+*.log
+*.tmp
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Keystores (MUY IMPORTANTE)
+# ==========================
+*.jks
+*.keystore
+
+# ==========================
+# Generated files
+# ==========================
+app/google-services.json 

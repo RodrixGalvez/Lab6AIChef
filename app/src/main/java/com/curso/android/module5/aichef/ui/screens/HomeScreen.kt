@@ -40,6 +40,16 @@ import com.curso.android.module5.aichef.ui.viewmodel.ChefViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 
 /**
  * =============================================================================
@@ -71,6 +81,8 @@ fun HomeScreen(
 ) {
     // Observar lista de recetas
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
+    var favoritesOnly by remember { mutableStateOf(false) }
+    val visibleRecipes = if (favoritesOnly) recipes.filter { it.isFavorite } else recipes
 
     Scaffold(
         topBar = {
@@ -107,30 +119,47 @@ fun HomeScreen(
             }
         }
     ) { paddingValues ->
-        if (recipes.isEmpty()) {
-            // Estado vacío
-            EmptyRecipesState(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Chips All / Favorites
+            androidx.compose.foundation.layout.Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            )
-        } else {
-            // Lista de recetas
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(
-                    items = recipes,
-                    key = { it.id } // Clave única para optimización
-                ) { recipe ->
-                    RecipeCard(
-                        recipe = recipe,
-                        onClick = { onNavigateToDetail(recipe.id) }
-                    )
+                FilterChip(
+                    selected = !favoritesOnly,
+                    onClick = { favoritesOnly = false },
+                    label = { Text("All") }
+                )
+                FilterChip(
+                    selected = favoritesOnly,
+                    onClick = { favoritesOnly = true },
+                    label = { Text("Favorites") }
+                )
+            }
+
+            if (visibleRecipes.isEmpty()) {
+                EmptyRecipesState(modifier = Modifier.fillMaxSize())
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(items = visibleRecipes, key = { it.id }) { recipe ->
+                        RecipeCard(
+                            recipe = recipe,
+                            onClick = { onNavigateToDetail(recipe.id) },
+                            onToggleFavorite = { newValue ->
+                                viewModel.toggleFavorite(recipe.id, newValue)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -144,7 +173,9 @@ fun HomeScreen(
 @Composable
 private fun RecipeCard(
     recipe: Recipe,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onToggleFavorite: (Boolean) -> Unit
+
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -159,8 +190,7 @@ private fun RecipeCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Icono y título
-            androidx.compose.foundation.layout.Row(
+            Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -183,6 +213,14 @@ private fun RecipeCard(
                         text = formatDate(recipe.createdAt),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(
+                    onClick = { onToggleFavorite(!recipe.isFavorite) }
+                ) {
+                    Icon(
+                        imageVector = if (recipe.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = null
                     )
                 }
             }

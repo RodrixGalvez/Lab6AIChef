@@ -23,6 +23,7 @@ import com.curso.android.module5.aichef.ui.screens.RecipeDetailScreen
 import com.curso.android.module5.aichef.ui.theme.AiChefTheme
 import com.curso.android.module5.aichef.ui.viewmodel.ChefViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.runtime.LaunchedEffect
 
 /**
  * =============================================================================
@@ -130,15 +131,10 @@ fun AiChefNavigation() {
     val authState by viewModel.authState.collectAsStateWithLifecycle()
 
     // Determinar destino inicial basado en estado de auth
-    val startDestination = when (authState) {
-        is AuthState.Authenticated -> NavRoutes.HOME
-        is AuthState.Unauthenticated -> NavRoutes.AUTH
-        else -> NavRoutes.AUTH // Loading o Error -> mostrar auth
-    }
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = NavRoutes.AUTH
     ) {
         // Pantalla de autenticación
         composable(NavRoutes.AUTH) {
@@ -152,6 +148,8 @@ fun AiChefNavigation() {
                 }
             )
         }
+
+
 
         // Pantalla principal con lista de recetas
         composable(NavRoutes.HOME) {
@@ -196,6 +194,23 @@ fun AiChefNavigation() {
                     navController.popBackStack()
                 }
             )
+        }
+    }
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Authenticated -> {
+                navController.navigate(NavRoutes.HOME) {
+                    popUpTo(NavRoutes.AUTH) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+            is AuthState.Unauthenticated -> {
+                navController.navigate(NavRoutes.AUTH) {
+                    popUpTo(0) // limpia todo
+                    launchSingleTop = true
+                }
+            }
+            else -> Unit
         }
     }
 }

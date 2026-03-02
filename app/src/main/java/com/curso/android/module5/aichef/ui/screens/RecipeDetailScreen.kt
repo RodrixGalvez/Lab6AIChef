@@ -44,6 +44,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.curso.android.module5.aichef.domain.model.UiState
 import com.curso.android.module5.aichef.ui.viewmodel.ChefViewModel
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 
 /**
  * =============================================================================
@@ -162,8 +164,6 @@ fun RecipeDetailScreen(
                 title = { Text(recipe?.title ?: "Detalle de Receta") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        // Limpiamos el estado de imagen al salir para evitar
-                        // mostrar la imagen anterior en la próxima receta
                         viewModel.clearImageState()
                         onNavigateBack()
                     }) {
@@ -171,6 +171,27 @@ fun RecipeDetailScreen(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver"
                         )
+                    }
+                },
+                actions = {
+                    // Solo mostrar si la receta ya existe
+                    if (recipe != null) {
+                        IconButton(
+                            onClick = {
+                                viewModel.toggleFavorite(recipe.id, !recipe.isFavorite)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (recipe.isFavorite)
+                                    Icons.Filled.Favorite
+                                else
+                                    Icons.Outlined.FavoriteBorder,
+                                contentDescription = if (recipe.isFavorite)
+                                    "Quitar de favoritos"
+                                else
+                                    "Agregar a favoritos"
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

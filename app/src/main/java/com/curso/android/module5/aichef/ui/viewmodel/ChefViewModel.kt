@@ -22,6 +22,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 
 /**
  * =============================================================================
@@ -93,6 +97,7 @@ class ChefViewModel @Inject constructor(
 
     private val _authUiState = MutableStateFlow<UiState<Unit>>(UiState.Idle)
     val authUiState: StateFlow<UiState<Unit>> = _authUiState.asStateFlow()
+    private val _favoriteOverrides = MutableStateFlow<Map<String, Boolean>>(emptyMap())
 
     // =========================================================================
     // LISTA DE RECETAS
@@ -107,20 +112,22 @@ class ChefViewModel @Inject constructor(
      *
      * Si el usuario no está autenticado, emitimos lista vacía.
      */
-    val recipes: StateFlow<List<Recipe>> = authState
-        .flatMapLatest { state ->
-            when (state) {
-                is AuthState.Authenticated -> {
-                    firestoreRepository.observeUserRecipes(state.userId)
+    private val firestoreRecipes: StateFlow<List<Recipe>> =
+        authState
+            .flatMapLatest { state ->
+                when (state) {
+                    is AuthState.Authenticated -> firestoreRepository.observeUserRecipes(state.userId)
+                    else -> flowOf(emptyList())
                 }
-                else -> flowOf(emptyList())
             }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val recipes: StateFlow<List<Recipe>> =
+        combine(firestoreRecipes, _favoriteOverrides) { base, overrides ->
+            base.map { r ->
+                overrides[r.id]?.let { r.copy(isFavorite = it) } ?: r
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // =========================================================================
     // ESTADO DE GENERACIÓN DE RECETAS
@@ -390,5 +397,39 @@ class ChefViewModel @Inject constructor(
     fun clearImageState() {
         imageGenerationJob?.cancel()
         _imageGenerationState.value = UiState.Idle
+    }
+    fun toggleFavorite(recipeId: String, newValue: Boolean) {
+        viewModelScope.launch {
+            val oldEffective = recipes.value.firstOrNull { it.id == recipeId }?.isFavorite
+
+            // optimistic UI
+            _favoriteOverrides.value = _favoriteOverrides.value.toMutableMap().apply {
+                this[recipeId] = newValue
+            }
+
+            val result = firestoreRepository.toggleFavorite(recipeId, newValue)
+
+            result.onSuccess {
+                // ESPERAR a que Firestore (sin overrides) refleje el cambio
+                runCatching {
+                    firestoreRecipes
+                        .map { list -> list.firstOrNull { it.id == recipeId }?.isFavorite }
+                        .filterNotNull()
+                        .first { it == newValue }
+                }
+
+                // ahora sí quitamos override
+                _favoriteOverrides.value = _favoriteOverrides.value.toMutableMap().apply {
+                    remove(recipeId)
+                }
+            }.onFailure { e ->
+                android.util.Log.e("ChefViewModel", "toggleFavorite failed: ${e.message}", e)
+
+                // revert
+                _favoriteOverrides.value = _favoriteOverrides.value.toMutableMap().apply {
+                    if (oldEffective == null) remove(recipeId) else this[recipeId] = oldEffective
+                }
+            }
+        }
     }
 }
